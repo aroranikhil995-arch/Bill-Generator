@@ -11,8 +11,8 @@ import { generateBillId, saveBill } from '../services/supabase';
 import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import { TAX_RATE } from '../data/menu';
 
-// ── Replace with your actual Vercel deployment URL ─────────────────────────────
-const WEB_BASE_URL = 'https://barista-demo.vercel.app';
+// ── Vercel deployment URL ─────────────────────────────────────────────────────
+const WEB_BASE_URL = 'https://bill-generator-pn8wmcbfo-aroranikhil995-1008s-projects.vercel.app';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BillPreview'>;
 
