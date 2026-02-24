@@ -1,0 +1,33 @@
+# ─── Environment ──────────────────────────────────────────────
+.env.local
+.env
+
+# ─── Node ─────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ─── Next.js ──────────────────────────────────────────────────
+.next/
+out/
+dist/
+
+# ─── React Native ─────────────────────────────────────────────
+barista-app/android/.gradle
+barista-app/android/app/build
+barista-app/android/build
+barista-app/ios/build
+barista-app/ios/Pods
+barista-app/ios/.xcode.env.local
+barista-app/.bundle
+
+# ─── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ──────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+
+# ─── TypeScript ───────────────────────────────────────────────
+*.tsbuildinfo
