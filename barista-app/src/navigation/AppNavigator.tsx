@@ -15,7 +15,7 @@ export type RootStackParamList = {
     BillPreview: undefined;
     PrintSuccess: { billId: string };
     BillsList: undefined;
-    BillDetails: { bill: { id: string; total_amount: number; created_at: string } };
+    BillDetails: { bill: { id: string; total_amount: number; payment_status: 'paid' | 'unpaid'; created_at: string } };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

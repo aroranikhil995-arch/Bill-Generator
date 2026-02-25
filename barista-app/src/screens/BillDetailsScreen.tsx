@@ -57,6 +57,9 @@ export default function BillDetailsScreen({ route }: Props) {
                     <Text style={styles.gstText}>GSTIN: 07AAAAA0000A1Z5</Text>
                     <Text style={styles.subtitle}>Order: {bill.id}</Text>
                     <Text style={styles.date}>{dateString}</Text>
+                    <View style={[styles.statusBadge, bill.payment_status === 'paid' ? styles.statusPaid : styles.statusUnpaid]}>
+                        <Text style={styles.statusText}>{bill.payment_status === 'paid' ? '● PAID' : '○ UNPAID'}</Text>
+                    </View>
                 </View>
 
                 {loading ? (
@@ -227,5 +230,24 @@ const styles = StyleSheet.create({
     },
     loader: {
         marginTop: 40,
+    },
+    statusBadge: {
+        alignSelf: 'center',
+        marginTop: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: Radius.md,
+    },
+    statusPaid: {
+        backgroundColor: '#E6F4EA',
+    },
+    statusUnpaid: {
+        backgroundColor: '#FCE8E6',
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.text,
+        letterSpacing: 1,
     },
 });

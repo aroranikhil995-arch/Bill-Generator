@@ -12,6 +12,7 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 interface Bill {
     id: string;
     total_amount: number;
+    payment_status: 'paid' | 'unpaid';
     created_at: string;
 }
 
@@ -28,22 +29,7 @@ export default function BillsListScreen() {
         try {
             setLoading(true);
 
-            // Debug Internet Connection directly
-            try {
-                const test = await fetch('https://httpbin.org/get');
-                console.log('Test fetch httpbin result:', test.status);
-            } catch (e: any) {
-                console.log('Test fetch httpbin failed entirely:', e.message);
-            }
-            try {
-                const test2 = await fetch('https://zskacijcccjpwzxisrfj.supabase.co/rest/v1/', { method: 'GET' });
-                console.log('Test fetch supabase result:', test2.status);
-            } catch (e: any) {
-                console.log('Test fetch supabase failed entirely:', e.message);
-                console.log('fetch error details:', e);
-            }
-
-            let query = supabase.from('bills').select('id,total_amount,created_at').order('created_at', { ascending: false });
+            let query = supabase.from('bills').select('id,total_amount,payment_status,created_at').order('created_at', { ascending: false });
 
             // Apply filters
             const now = new Date();
@@ -80,6 +66,7 @@ export default function BillsListScreen() {
     const renderBill = ({ item }: { item: Bill }) => {
         const date = new Date(item.created_at);
         const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isPaid = item.payment_status === 'paid';
 
         return (
             <TouchableOpacity
@@ -88,7 +75,12 @@ export default function BillsListScreen() {
                 onPress={() => navigation.navigate('BillDetails', { bill: item })}
             >
                 <View style={styles.billHeader}>
-                    <Text style={styles.billId}>{item.id}</Text>
+                    <View>
+                        <Text style={styles.billId}>{item.id}</Text>
+                        <View style={[styles.statusBadge, isPaid ? styles.statusPaid : styles.statusUnpaid]}>
+                            <Text style={styles.statusText}>{isPaid ? 'PAID' : 'UNPAID'}</Text>
+                        </View>
+                    </View>
                     <Text style={styles.billTotal}>${item.total_amount.toFixed(2)}</Text>
                 </View>
                 <Text style={styles.billDate}>{dateString}</Text>
@@ -231,7 +223,7 @@ const styles = StyleSheet.create({
     billHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: 8,
     },
     billId: {
@@ -247,6 +239,25 @@ const styles = StyleSheet.create({
     billDate: {
         fontSize: FontSize.sm,
         color: Colors.textMuted,
+    },
+    statusBadge: {
+        alignSelf: 'flex-start',
+        marginTop: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: Radius.sm,
+    },
+    statusPaid: {
+        backgroundColor: '#E6F4EA',
+    },
+    statusUnpaid: {
+        backgroundColor: '#FCE8E6',
+    },
+    statusText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: Colors.text,
+        letterSpacing: 0.5,
     },
     emptyState: {
         marginTop: 40,

@@ -22,8 +22,21 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
     const [processing, setProcessing] = useState(false);
     const [isDone, setIsDone] = useState(false);
 
+    // Form states
+    const [upiId, setUpiId] = useState('');
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiry, setExpiry] = useState('');
+    const [cvv, setCvv] = useState('');
+
+    const isFormValid = () => {
+        if (selected === 'upi') return upiId.includes('@');
+        if (selected === 'card') return cardNumber.length >= 16 && expiry.length >= 5 && cvv.length >= 3;
+        if (selected === 'cash') return true;
+        return false;
+    };
+
     const handlePay = async () => {
-        if (!selected) return;
+        if (!selected || !isFormValid()) return;
         setProcessing(true);
 
         // Simulate payment delay
@@ -42,9 +55,8 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
 
             setIsDone(true);
             setTimeout(() => {
-                onSuccess();
-                onClose();
-            }, 2000);
+                onSuccess(); // This calls window.location.reload() in ActionButtons.tsx
+            }, 1500);
         } catch (error) {
             console.error('Payment update failed:', error);
             alert('Simulation failed, please try again.');
@@ -61,6 +73,7 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
                         <div className={styles.successIcon}>✅</div>
                         <h2 className={styles.title}>Payment Successful!</h2>
                         <p>Thank you for your payment of ${amount.toFixed(2)}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '10px' }}>Refreshing your bill...</p>
                     </div>
                 </div>
             </div>
@@ -77,26 +90,81 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
 
                 <div className={styles.content}>
                     <h3 className={styles.sectionTitle}>Select Payment Method</h3>
-                    {METHODS.map(m => (
-                        <div
-                            key={m.id}
-                            className={`${styles.option} ${selected === m.id ? styles.optionActive : ''}`}
-                            onClick={() => setSelected(m.id)}
-                        >
-                            <span className={styles.icon}>{m.icon}</span>
-                            <div className={styles.optionInfo}>
-                                <span className={styles.optionName}>{m.name}</span>
-                                <span className={styles.optionDesc}>{m.desc}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {METHODS.map(m => (
+                            <div key={m.id}>
+                                <div
+                                    className={`${styles.option} ${selected === m.id ? styles.optionActive : ''}`}
+                                    onClick={() => setSelected(m.id)}
+                                >
+                                    <span className={styles.icon}>{m.icon}</span>
+                                    <div className={styles.optionInfo}>
+                                        <span className={styles.optionName}>{m.name}</span>
+                                        <span className={styles.optionDesc}>{m.desc}</span>
+                                    </div>
+                                    {selected === m.id && <span>🔘</span>}
+                                </div>
+
+                                {selected === m.id && m.id === 'upi' && (
+                                    <div className={styles.form} style={{ marginTop: '8px' }}>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label}>Enter UPI ID</label>
+                                            <input
+                                                className={styles.input}
+                                                placeholder="yourname@bank"
+                                                value={upiId}
+                                                onChange={(e) => setUpiId(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selected === m.id && m.id === 'card' && (
+                                    <div className={styles.form} style={{ marginTop: '8px' }}>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label}>Card Number</label>
+                                            <input
+                                                className={styles.input}
+                                                placeholder="0000 0000 0000 0000"
+                                                maxLength={19}
+                                                value={cardNumber}
+                                                onChange={(e) => setCardNumber(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className={styles.row}>
+                                            <div className={styles.inputGroup}>
+                                                <label className={styles.label}>Expiry</label>
+                                                <input
+                                                    className={styles.input}
+                                                    placeholder="MM/YY"
+                                                    maxLength={5}
+                                                    value={expiry}
+                                                    onChange={(e) => setExpiry(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className={styles.inputGroup}>
+                                                <label className={styles.label}>CVV</label>
+                                                <input
+                                                    className={styles.input}
+                                                    placeholder="123"
+                                                    maxLength={3}
+                                                    type="password"
+                                                    value={cvv}
+                                                    onChange={(e) => setCvv(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            {selected === m.id && <span>🔘</span>}
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
 
                 <div className={styles.footer}>
                     <button
                         className={styles.payBtn}
-                        disabled={!selected || processing}
+                        disabled={!selected || !isFormValid() || processing}
                         onClick={handlePay}
                     >
                         {processing ? 'Processing Securely...' : `Pay $${amount.toFixed(2)}`}
