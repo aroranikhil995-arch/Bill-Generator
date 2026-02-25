@@ -114,6 +114,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             await BluetoothEscposPrinter.setBlob(1);
             await BluetoothEscposPrinter.printText('Barista Cafe\n', { widthtimes: 1, heigthtimes: 1 });
             await BluetoothEscposPrinter.setBlob(0);
+            await BluetoothEscposPrinter.printText('GSTIN: 07AAAAA0000A1Z5\n', {});
             await BluetoothEscposPrinter.printText(`Bill #${billId}\n`, {});
             await BluetoothEscposPrinter.printText(`${new Date().toLocaleString()}\n`, {});
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
@@ -187,6 +188,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     {/* Card Header */}
                     <View style={styles.cardHeader}>
                         <Text style={styles.cafeName}>☕  Barista Cafe</Text>
+                        <Text style={styles.gstTextPreview}>GSTIN: 07AAAAA0000A1Z5</Text>
                         {billId ? (
                             <Text style={styles.billId}>Bill #{billId}</Text>
                         ) : (
@@ -297,6 +299,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cafeName: { fontSize: FontSize.xl, fontWeight: '700', color: Colors.accent },
+    gstTextPreview: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.7)',
+        letterSpacing: 1,
+        marginTop: 2,
+        textTransform: 'uppercase',
+    },
     billId: { fontSize: FontSize.sm, color: '#fff', marginTop: 4, fontWeight: '600' },
     billIdPending: { fontSize: FontSize.xs, color: 'rgba(255,255,255,0.55)', marginTop: 4 },
     dateText: { fontSize: FontSize.xs, color: 'rgba(255,255,255,0.65)', marginTop: 4 },

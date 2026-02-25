@@ -54,6 +54,7 @@ export default function BillDetailsScreen({ route }: Props) {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.title}>Barista Cafe</Text>
+                    <Text style={styles.gstText}>GSTIN: 07AAAAA0000A1Z5</Text>
                     <Text style={styles.subtitle}>Order: {bill.id}</Text>
                     <Text style={styles.date}>{dateString}</Text>
                 </View>
@@ -125,7 +126,15 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xl,
         fontWeight: '800',
         color: Colors.text,
-        marginBottom: 4,
+        marginBottom: 2,
+    },
+    gstText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: Colors.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+        opacity: 0.7,
     },
     subtitle: {
         fontSize: FontSize.md,

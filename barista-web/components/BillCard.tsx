@@ -31,6 +31,7 @@ export default function BillCard({ bill }: Props) {
                     <span className={styles.headerIcon}>☕</span>
                     <h1 className={styles.cafeName}>Barista Cafe</h1>
                     <h2 className={styles.tagline}>Every cup tells a story</h2>
+                    <p className={styles.gstin}>GSTIN: 07AAAAA0000A1Z5</p>
                 </div>
 
                 {/* Bill meta */}
