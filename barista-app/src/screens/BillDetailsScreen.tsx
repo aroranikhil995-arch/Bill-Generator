@@ -7,7 +7,7 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
-const WEB_BASE_URL = 'https://bill-generator-nu-one.vercel.app';
+const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BillDetails'>;
 

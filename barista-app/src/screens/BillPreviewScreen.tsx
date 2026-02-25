@@ -12,8 +12,7 @@ import { generateBillId, saveBill } from '../services/supabase';
 import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import { TAX_RATE } from '../data/menu';
 
-// ── Vercel deployment URL ─────────────────────────────────────────────────────
-const WEB_BASE_URL = 'https://bill-generator-nu-one.vercel.app';
+const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BillPreview'>;
 
