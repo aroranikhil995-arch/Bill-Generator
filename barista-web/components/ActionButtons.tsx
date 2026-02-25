@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import type { Bill } from '@/lib/supabase';
+import PaymentModal from './PaymentModal';
 import styles from './ActionButtons.module.css';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 export default function ActionButtons({ bill, billRef }: Props) {
     const [downloading, setDownloading] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
 
     // ─── Print ─────────────────────────────────────────────────────────────────
     const handlePrint = () => window.print();
@@ -134,26 +136,43 @@ export default function ActionButtons({ bill, billRef }: Props) {
     };
 
     return (
-        <div className={`${styles.container} no-print`}>
-            <button className={`${styles.btn} ${styles.print}`} onClick={handlePrint}>
-                <span>🖨️</span> Print
-            </button>
+        <>
+            <div className={`${styles.container} no-print`}>
+                <button className={`${styles.btn} ${styles.print}`} onClick={handlePrint}>
+                    <span>🖨️</span> Print
+                </button>
 
-            <button
-                className={`${styles.btn} ${styles.download}`}
-                onClick={handleDownload}
-                disabled={downloading}
-            >
-                <span>⬇️</span> {downloading ? 'PDF' : 'Download PDF'}
-            </button>
+                <button
+                    className={`${styles.btn} ${styles.download}`}
+                    onClick={handleDownload}
+                    disabled={downloading}
+                >
+                    <span>⬇️</span> {downloading ? 'PDF' : 'Download PDF'}
+                </button>
 
-            <button className={`${styles.btn} ${styles.tally}`} onClick={handleExportTally}>
-                <span>📊</span> Tally XML
-            </button>
+                {bill.payment_status === 'unpaid' && (
+                    <button className={`${styles.btn} ${styles.pay}`} onClick={() => setShowPayment(true)}>
+                        <span>💰</span> Pay Now
+                    </button>
+                )}
 
-            <button className={`${styles.btn} ${styles.share}`} onClick={handleShare}>
-                <span>📤</span> {copied ? 'Copied' : 'Share'}
-            </button>
-        </div>
+                <button className={`${styles.btn} ${styles.tally}`} onClick={handleExportTally}>
+                    <span>📊</span> Tally XML
+                </button>
+
+                <button className={`${styles.btn} ${styles.share}`} onClick={handleShare}>
+                    <span>📤</span> {copied ? 'Copied' : 'Share'}
+                </button>
+            </div>
+
+            {showPayment && (
+                <PaymentModal
+                    billId={bill.id}
+                    amount={bill.total_amount}
+                    onClose={() => setShowPayment(false)}
+                    onSuccess={() => window.location.reload()}
+                />
+            )}
+        </>
     );
 }

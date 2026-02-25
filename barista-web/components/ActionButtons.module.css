@@ -32,8 +32,39 @@
   color: #fff;
 }
 
+.pay {
+  background: #3B1F0E;
+  color: #fff;
+  border: 1px solid var(--color-accent);
+}
+
 .tally {
   background: #12733d;
+  color: #fff;
+}
+
+/* ─── Status Badge ───────────────────────────────────────── */
+.statusBadge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.unpaid {
+  background: #ff4d4d;
+  color: #fff;
+}
+
+.paid {
+  background: #27ae60;
   color: #fff;
 }
 
