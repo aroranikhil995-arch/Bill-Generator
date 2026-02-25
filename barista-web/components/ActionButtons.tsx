@@ -50,6 +50,54 @@ export default function ActionButtons({ bill, billRef }: Props) {
         }
     };
 
+    // ─── Export Tally XML ──────────────────────────────────────────────────────
+    const handleExportTally = () => {
+        const date = new Date(bill.created_at).toISOString().split('T')[0].replace(/-/g, '');
+        const xml = `<?xml version="1.0"?>
+<ENVELOPE>
+    <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
+    <BODY>
+        <IMPORTDATA>
+            <REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME></REQUESTDESC>
+            <REQUESTDATA>
+                <TALLYMESSAGE xmlns:UDF="TallyUDF">
+                    <VOUCHER VCHTYPE="Sales" ACTION="Create">
+                        <DATE>${date}</DATE>
+                        <VOUCHERNUMBER>${bill.id}</VOUCHERNUMBER>
+                        <REFERENCE>${bill.id}</REFERENCE>
+                        <PARTYLEDGERNAME>Cash</PARTYLEDGERNAME>
+                        <STATENAME>Delhi</STATENAME>
+                        <ALLLEDGERENTRIES.LIST>
+                            <LEDGERNAME>Cash</LEDGERNAME>
+                            <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+                            <AMOUNT>-${bill.total_amount}</AMOUNT>
+                        </ALLLEDGERENTRIES.LIST>
+                        <ALLLEDGERENTRIES.LIST>
+                            <LEDGERNAME>Sales</LEDGERNAME>
+                            <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                            <AMOUNT>${bill.subtotal}</AMOUNT>
+                        </ALLLEDGERENTRIES.LIST>
+                        <ALLLEDGERENTRIES.LIST>
+                            <LEDGERNAME>Output GST</LEDGERNAME>
+                            <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                            <AMOUNT>${bill.tax_amount}</AMOUNT>
+                        </ALLLEDGERENTRIES.LIST>
+                    </VOUCHER>
+                </TALLYMESSAGE>
+            </REQUESTDATA>
+        </IMPORTDATA>
+    </BODY>
+</ENVELOPE>`;
+
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tally-import-${bill.id}.xml`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     // ─── Share ─────────────────────────────────────────────────────────────────
     const handleShare = async () => {
         const url = window.location.href;
@@ -73,11 +121,15 @@ export default function ActionButtons({ bill, billRef }: Props) {
                 onClick={handleDownload}
                 disabled={downloading}
             >
-                <span>⬇️</span> {downloading ? 'Generating…' : 'Download PDF'}
+                <span>⬇️</span> {downloading ? 'PDF' : 'Download PDF'}
+            </button>
+
+            <button className={`${styles.btn} ${styles.tally}`} onClick={handleExportTally}>
+                <span>📊</span> Tally XML
             </button>
 
             <button className={`${styles.btn} ${styles.share}`} onClick={handleShare}>
-                <span>📤</span> {copied ? 'Link Copied!' : 'Share'}
+                <span>📤</span> {copied ? 'Copied' : 'Share'}
             </button>
         </div>
     );
