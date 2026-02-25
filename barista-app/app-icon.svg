@@ -1,0 +1,33 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5C3317"/>
+      <stop offset="100%" stop-color="#2D1709"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
+  
+  <!-- Saucer -->
+  <ellipse cx="512" cy="740" rx="340" ry="50" fill="#c8a786"/>
+  <ellipse cx="512" cy="730" rx="300" ry="40" fill="#a88562"/>
+  
+  <!-- Cup Base -->
+  <path d="M 280 340 L 744 340 C 744 340, 680 700, 512 700 C 344 700, 280 340, 280 340 Z" fill="#FFF9F2"/>
+  
+  <!-- Cup Handle -->
+  <path d="M 700 400 C 900 400, 900 620, 650 620" fill="none" stroke="#FFF9F2" stroke-width="70" stroke-linecap="round"/>
+  
+  <!-- Coffee inside top ellipse -->
+  <ellipse cx="512" cy="340" rx="232" ry="45" fill="#FFF9F2"/>
+  <!-- The dark liquid coffee -->
+  <ellipse cx="512" cy="340" rx="200" ry="32" fill="#2D1709"/>
+  
+  <!-- Latte Art Idea (a tiny minimal heart inside) -->
+  <path d="M 512 360 C 512 360, 480 330, 480 310 C 480 290, 512 300, 512 320 C 512 300, 544 290, 544 310 C 544 330, 512 360, 512 360 Z" fill="#c8a786"/>
+  
+  <!-- Steam (beautiful flowing S-curves) -->
+  <path d="M 440 250 C 400 180, 480 120, 440 40" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="24" stroke-linecap="round"/>
+  <path d="M 512 280 C 460 200, 564 120, 512 30" fill="none" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="32" stroke-linecap="round"/>
+  <path d="M 584 250 C 540 180, 620 120, 584 40" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="20" stroke-linecap="round"/>
+</svg>

@@ -15,7 +15,7 @@ function formatDate(iso: string) {
 }
 
 function rupee(amount: number) {
-    return `₹${Number(amount).toFixed(2)}`;
+    return `$${Number(amount).toFixed(2)}`;
 }
 
 export default function BillCard({ bill }: Props) {

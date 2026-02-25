@@ -15,17 +15,17 @@ export default function TaxSummaryBar({ subtotal, taxAmount, total }: Props) {
             <View style={styles.row}>
                 <View style={styles.col}>
                     <Text style={styles.label}>Subtotal</Text>
-                    <Text style={styles.value}>₹{subtotal.toFixed(2)}</Text>
+                    <Text style={styles.value}>${subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.sep} />
                 <View style={styles.col}>
                     <Text style={styles.label}>GST ({TAX_RATE}%)</Text>
-                    <Text style={styles.value}>₹{taxAmount.toFixed(2)}</Text>
+                    <Text style={styles.value}>${taxAmount.toFixed(2)}</Text>
                 </View>
                 <View style={styles.sep} />
                 <View style={styles.col}>
                     <Text style={[styles.label, styles.totalLabel]}>TOTAL</Text>
-                    <Text style={[styles.value, styles.totalValue]}>₹{total.toFixed(2)}</Text>
+                    <Text style={[styles.value, styles.totalValue]}>${total.toFixed(2)}</Text>
                 </View>
             </View>
         </View>

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity,
     StyleSheet, SafeAreaView, Alert, ActivityIndicator,
+    PermissionsAndroid, Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
@@ -59,53 +60,122 @@ export default function BillPreviewScreen({ navigation }: Props) {
             Alert.alert('Save first', 'Please save the bill before printing.');
             return;
         }
+
+        console.log('[PRINT] Requesting permissions...');
+        // Request Android 12+ Bluetooth permissions
+        if (Platform.OS === 'android' && Platform.Version >= 31) {
+            try {
+                const granted = await PermissionsAndroid.requestMultiple([
+                    PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+                    PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+                ]);
+                console.log('[PRINT] Permissions results:', granted);
+                if (
+                    granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] !== PermissionsAndroid.RESULTS.GRANTED
+                ) {
+                    console.log('[PRINT] Access Denied.');
+                    Alert.alert('Permission Denied', 'Bluetooth connection permission is required to print.');
+                    return;
+                }
+            } catch (err) {
+                console.warn('[PRINT] Permission error:', err);
+                return;
+            }
+        }
         try {
+            console.log('[PRINT] Getting BluetoothManager...');
             // Dynamic import to avoid crash if BT not available on all platforms
             const BluetoothManager = require('react-native-bluetooth-escpos-printer').BluetoothManager;
             const BluetoothEscposPrinter = require('react-native-bluetooth-escpos-printer').BluetoothEscposPrinter;
 
-            // Check connection
-            const isConnected = await BluetoothManager.isDeviceBleEnabled();
-            if (!isConnected) {
-                Alert.alert('Bluetooth Off', 'Please enable Bluetooth and connect your printer.');
+            console.log('[PRINT] Calling enableBluetooth...');
+            // Ensure Bluetooth is enabled and fetch paired devices
+            const pairedDevicesArray = await BluetoothManager.enableBluetooth();
+            console.log('[PRINT] pairedDevicesArray:', pairedDevicesArray);
+            if (!pairedDevicesArray || pairedDevicesArray.length === 0) {
+                Alert.alert('No Devices', 'No paired Bluetooth devices found. Please pair your printer in Android Settings.');
                 return;
             }
 
-            // Print header
-            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
-            await BluetoothEscposPrinter.printText('BARISTA CAFE\n', { fontSize: 36, fonttype: 1 });
-            await BluetoothEscposPrinter.printText(`----------------------------------------\n`, {});
-            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
-            await BluetoothEscposPrinter.printText(`Bill No: ${billId}\n`, {});
-            await BluetoothEscposPrinter.printText(`Date   : ${now}\n`, {});
-            await BluetoothEscposPrinter.printText(`----------------------------------------\n`, {});
-
-            // Items
-            await BluetoothEscposPrinter.printText(
-                `${'ITEM'.padEnd(18)}${'QTY'.padEnd(6)}${'AMT'.padStart(8)}\n`, {},
-            );
-            for (const item of items) {
-                const line = `${item.name.slice(0, 17).padEnd(18)}${String(item.quantity).padEnd(6)}${('₹' + item.itemTotal.toFixed(2)).padStart(8)}`;
-                await BluetoothEscposPrinter.printText(line + '\n', {});
+            console.log('[PRINT] Parsing first device...');
+            // Connect to the first paired device as a fallback/auto-connect
+            // In a real app we'd build a device picker list.
+            try {
+                const firstDevice = JSON.parse(pairedDevicesArray[0]);
+                console.log('[PRINT] Connecting to:', firstDevice.address);
+                await BluetoothManager.connect(firstDevice.address);
+            } catch (e: any) {
+                console.warn('Auto-connect warning:', e);
+                // Allow it to proceed in case it's already connected or throws a false error
             }
 
-            await BluetoothEscposPrinter.printText(`----------------------------------------\n`, {});
-            await BluetoothEscposPrinter.printText(`Subtotal          ₹${subtotal.toFixed(2)}\n`, {});
-            await BluetoothEscposPrinter.printText(`GST (${TAX_RATE}%)            ₹${taxAmount.toFixed(2)}\n`, {});
-            await BluetoothEscposPrinter.printText(`TOTAL             ₹${total.toFixed(2)}\n`, {});
-            await BluetoothEscposPrinter.printText(`----------------------------------------\n`, {});
+            console.log('[PRINT] Starting print sequence...');
+            // Print header
+            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+            await BluetoothEscposPrinter.setBlob(1);
+            await BluetoothEscposPrinter.printText('Barista Cafe\n', { widthtimes: 1, heigthtimes: 1 });
+            await BluetoothEscposPrinter.setBlob(0);
+            await BluetoothEscposPrinter.printText(`Bill #${billId}\n`, {});
+            await BluetoothEscposPrinter.printText(`${new Date().toLocaleString()}\n`, {});
+            await BluetoothEscposPrinter.printText('--------------------------------\n', {});
 
-            // QR Code
+            // Print Items List Header
+            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+            await BluetoothEscposPrinter.printColumn(
+                [18, 5, 9],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['Item', 'Qty', 'Total'],
+                {}
+            );
+            await BluetoothEscposPrinter.printText('--------------------------------\n', {});
+
+            // Print Items
+            for (const item of items) {
+                await BluetoothEscposPrinter.printColumn(
+                    [18, 5, 9],
+                    [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
+                    [item.name.substring(0, 18), String(item.quantity), `$${item.itemTotal.toFixed(2)}`],
+                    {}
+                );
+            }
+
+            // Print Totals
+            await BluetoothEscposPrinter.printText('--------------------------------\n', {});
+            await BluetoothEscposPrinter.printColumn(
+                [23, 9],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['Subtotal:', `$${subtotal.toFixed(2)}`],
+                {}
+            );
+            await BluetoothEscposPrinter.printColumn(
+                [23, 9],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['GST (5%):', `$${taxAmount.toFixed(2)}`],
+                {}
+            );
+            await BluetoothEscposPrinter.printText('--------------------------------\n', {});
+            await BluetoothEscposPrinter.setBlob(1);
+            await BluetoothEscposPrinter.printColumn(
+                [23, 9],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['TOTAL:', `$${total.toFixed(2)}`],
+                {}
+            );
+            await BluetoothEscposPrinter.setBlob(0);
+            await BluetoothEscposPrinter.printText('--------------------------------\n\n', {});
+
+            // Print QR Code
+            const qrUrlForPrint = encodeURI(`${WEB_BASE_URL}/bill/${billId}`);
             await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
             await BluetoothEscposPrinter.printText('Scan to view your bill online\n', {});
-            await BluetoothEscposPrinter.printQRCode(qrUrl, 280, BluetoothEscposPrinter.ERROR_CORRECTION.M);
+            await BluetoothEscposPrinter.printQRCode(qrUrlForPrint, 280, BluetoothEscposPrinter.ERROR_CORRECTION.M);
             await BluetoothEscposPrinter.printText('\n\n\n', {});
-            await BluetoothEscposPrinter.cutPaper();
 
             clearCart();
             navigation.replace('PrintSuccess', { billId });
-        } catch (e: any) {
-            Alert.alert('Print Error', e?.message ?? 'Could not connect to printer.');
+        } catch (err: any) {
+            console.error('Print error:', err);
+            Alert.alert('Print Error', String(err));
         }
     };
 
@@ -138,7 +208,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
                         <View key={item.id} style={styles.tableRow}>
                             <Text style={styles.col1} numberOfLines={1}>{item.name}</Text>
                             <Text style={styles.colQty}>{item.quantity}</Text>
-                            <Text style={styles.colAmt}>₹{item.itemTotal.toFixed(2)}</Text>
+                            <Text style={styles.colAmt}>${item.itemTotal.toFixed(2)}</Text>
                         </View>
                     ))}
 
@@ -148,15 +218,15 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     <View style={styles.totalsBlock}>
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Subtotal</Text>
-                            <Text style={styles.totalValue}>₹{subtotal.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>${subtotal.toFixed(2)}</Text>
                         </View>
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>GST ({TAX_RATE}%)</Text>
-                            <Text style={styles.totalValue}>₹{taxAmount.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>${taxAmount.toFixed(2)}</Text>
                         </View>
                         <View style={[styles.totalRow, styles.grandTotalRow]}>
                             <Text style={styles.grandTotalLabel}>TOTAL</Text>
-                            <Text style={styles.grandTotalValue}>₹{total.toFixed(2)}</Text>
+                            <Text style={styles.grandTotalValue}>${total.toFixed(2)}</Text>
                         </View>
                     </View>
 
@@ -200,7 +270,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
                         onPress={handlePrint}
                         disabled={!billId}
                     >
-                        <Text style={styles.btnText}>🖨️  Print via Bluetooth</Text>
+                        <Text style={styles.btnText}>🖨️  Print</Text>
                     </TouchableOpacity>
                 </View>
 

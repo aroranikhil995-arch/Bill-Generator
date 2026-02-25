@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Warm cafe brown background, clipped to circle -->
+  <circle cx="512" cy="512" r="512" fill="#2E1B15" />
+  
+  <!-- Subtle background glow -->
+  <circle cx="512" cy="512" r="400" fill="#4E342E" opacity="0.4" filter="blur(20px)" />
+
+  <!-- Coffee Cup Body -->
+  <path d="M 280 380 L 280 620 A 180 180 0 0 0 460 800 L 564 800 A 180 180 0 0 0 744 620 L 744 380 Z" fill="#F5F5DC"/>
+  
+  <!-- Cup Handle -->
+  <path d="M 744 450 L 820 450 A 100 100 0 0 1 920 550 L 920 550 A 100 100 0 0 1 820 650 L 740 650" fill="none" stroke="#F5F5DC" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Sleek coffee wave inside cup top -->
+  <ellipse cx="512" cy="380" rx="232" ry="40" fill="#3E2723" />
+  <ellipse cx="512" cy="380" rx="200" ry="25" fill="#5D4037" />
+
+  <!-- Aromatic Steam lines with elegant curves -->
+  <path d="M 400 300 Q 440 230 380 160" fill="none" stroke="#F5F5DC" stroke-width="28" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 512 300 Q 562 230 492 140" fill="none" stroke="#F5F5DC" stroke-width="34" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 624 300 Q 664 230 604 160" fill="none" stroke="#F5F5DC" stroke-width="28" stroke-linecap="round" opacity="0.8"/>
+</svg>
