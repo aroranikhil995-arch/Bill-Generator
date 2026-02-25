@@ -53,6 +53,18 @@ export default function ActionButtons({ bill, billRef }: Props) {
     // ─── Export Tally XML ──────────────────────────────────────────────────────
     const handleExportTally = () => {
         const date = new Date(bill.created_at).toISOString().split('T')[0].replace(/-/g, '');
+
+        // Generate Inventory Entries for XML
+        const inventoryEntries = bill.bill_items.map(item => `
+                        <ALLINVENTORYENTRIES.LIST>
+                            <STOCKITEMNAME>${item.item_name}</STOCKITEMNAME>
+                            <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                            <RATE>${item.price}</RATE>
+                            <AMOUNT>${item.item_total}</AMOUNT>
+                            <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>
+                            <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>
+                        </ALLINVENTORYENTRIES.LIST>`).join('');
+
         const xml = `<?xml version="1.0"?>
 <ENVELOPE>
     <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
@@ -67,16 +79,27 @@ export default function ActionButtons({ bill, billRef }: Props) {
                         <REFERENCE>${bill.id}</REFERENCE>
                         <PARTYLEDGERNAME>Cash</PARTYLEDGERNAME>
                         <STATENAME>Delhi</STATENAME>
+                        <FBTPAYMENTTYPE>Default</FBTPAYMENTTYPE>
+                        <PERSISTEDVIEW>InvoiceView</PERSISTEDVIEW>
+                        
+                        <!-- Party Entry (Total Amount) -->
                         <ALLLEDGERENTRIES.LIST>
                             <LEDGERNAME>Cash</LEDGERNAME>
                             <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
                             <AMOUNT>-${bill.total_amount}</AMOUNT>
                         </ALLLEDGERENTRIES.LIST>
+
+                        <!-- Items & Inventory Breakdown -->
+                        ${inventoryEntries}
+
+                        <!-- Sales Ledger Entry (Subtotal) -->
                         <ALLLEDGERENTRIES.LIST>
                             <LEDGERNAME>Sales</LEDGERNAME>
                             <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
                             <AMOUNT>${bill.subtotal}</AMOUNT>
                         </ALLLEDGERENTRIES.LIST>
+
+                        <!-- Tax Ledger Entry (GST) -->
                         <ALLLEDGERENTRIES.LIST>
                             <LEDGERNAME>Output GST</LEDGERNAME>
                             <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
@@ -89,11 +112,11 @@ export default function ActionButtons({ bill, billRef }: Props) {
     </BODY>
 </ENVELOPE>`;
 
-        const blob = new Blob([xml], { type: 'application/xml' });
+        const blob = new Blob([xml.trim()], { type: 'application/xml' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `tally-import-${bill.id}.xml`;
+        link.download = `tally-detailed-${bill.id}.xml`;
         link.click();
         URL.revokeObjectURL(url);
     };
