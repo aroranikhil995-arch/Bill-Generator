@@ -6,6 +6,9 @@ import { supabase, BillItemPayload } from '../services/supabase';
 import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
 
+// ── Vercel deployment URL ─────────────────────────────────────────────────────
+const WEB_BASE_URL = 'https://bill-generator-nu-one.vercel.app';
+
 type Props = NativeStackScreenProps<RootStackParamList, 'BillDetails'>;
 
 export default function BillDetailsScreen({ route }: Props) {
@@ -81,7 +84,7 @@ export default function BillDetailsScreen({ route }: Props) {
 
                         <View style={styles.qrContainer}>
                             <QRCode
-                                value={`https://barista-cafe.example.com/receipts/${bill.id}`}
+                                value={`${WEB_BASE_URL}/bill/${bill.id}`}
                                 size={120}
                                 color={Colors.text}
                                 backgroundColor="transparent"
