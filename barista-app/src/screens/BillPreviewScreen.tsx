@@ -122,9 +122,9 @@ export default function BillPreviewScreen({ navigation }: Props) {
             // Print Items List Header
             await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
             await BluetoothEscposPrinter.printColumn(
-                [18, 5, 9],
+                [14, 10, 8],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['Item', 'Qty', 'Total'],
+                ['Item', 'Price x Qty', 'Total'],
                 {}
             );
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
@@ -132,9 +132,9 @@ export default function BillPreviewScreen({ navigation }: Props) {
             // Print Items
             for (const item of items) {
                 await BluetoothEscposPrinter.printColumn(
-                    [18, 5, 9],
+                    [14, 10, 8],
                     [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                    [item.name.substring(0, 18), String(item.quantity), `$${item.itemTotal.toFixed(2)}`],
+                    [item.name.substring(0, 14), `$${item.price.toFixed(2)}x${item.quantity}`, `$${item.itemTotal.toFixed(2)}`],
                     {}
                 );
             }
@@ -202,13 +202,13 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     {/* Items */}
                     <View style={styles.tableHeader}>
                         <Text style={[styles.col1, styles.colHead]}>Item</Text>
-                        <Text style={[styles.colQty, styles.colHead]}>Qty</Text>
+                        <Text style={[styles.colQty, styles.colHead]}>Price x Qty</Text>
                         <Text style={[styles.colAmt, styles.colHead]}>Total</Text>
                     </View>
                     {items.map((item) => (
                         <View key={item.id} style={styles.tableRow}>
                             <Text style={styles.col1} numberOfLines={1}>{item.name}</Text>
-                            <Text style={styles.colQty}>{item.quantity}</Text>
+                            <Text style={styles.colQty}>${item.price.toFixed(2)} x {item.quantity}</Text>
                             <Text style={styles.colAmt}>${item.itemTotal.toFixed(2)}</Text>
                         </View>
                     ))}
@@ -329,8 +329,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 6,
     },
-    col1: { flex: 1, fontSize: FontSize.sm, color: Colors.text },
-    colQty: { width: 36, textAlign: 'center', fontSize: FontSize.sm, color: Colors.text },
+    col1: { flex: 1.2, fontSize: FontSize.sm, color: Colors.text },
+    colQty: { flex: 1.5, textAlign: 'center', fontSize: FontSize.sm, color: Colors.text },
     colAmt: { width: 80, textAlign: 'right', fontSize: FontSize.sm, color: Colors.text, fontWeight: '600' },
 
     totalsBlock: { paddingHorizontal: 16, gap: 6 },
