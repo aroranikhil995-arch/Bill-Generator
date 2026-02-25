@@ -24,13 +24,27 @@ export default function ActionButtons({ bill, billRef }: Props) {
             const { default: jsPDF } = await import('jspdf');
             const { default: html2canvas } = await import('html2canvas');
 
-            const canvas = await html2canvas(billRef.current, { scale: 2, useCORS: true });
+            const canvas = await html2canvas(billRef.current, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: null
+            });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a5' });
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            // Calculate dimensions to match content exactly
+            const pdfWidth = (canvas.width / 3);
+            const pdfHeight = (canvas.height / 3);
+
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [pdfWidth, pdfHeight]
+            });
+
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`bill-${bill.id}.pdf`);
+        } catch (error) {
+            console.error('PDF generation error:', error);
         } finally {
             setDownloading(false);
         }
