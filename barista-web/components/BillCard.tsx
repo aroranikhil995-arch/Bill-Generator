@@ -27,7 +27,7 @@ export default function BillCard({ bill }: Props) {
             <div className={`${styles.card} bill-card`} ref={billRef} id="bill-card" style={{ position: 'relative' }}>
                 {/* Status Badge */}
                 <div className={`${styles.statusBadge} ${bill.payment_status === 'paid' ? styles.paid : styles.unpaid}`}>
-                    {bill.payment_status === 'paid' ? '● Paid' : '○ Unpaid'}
+                    {bill.payment_status === 'paid' ? '✓ Paid' : '⚠ Unpaid'}
                 </div>
 
                 {/* Header */}
