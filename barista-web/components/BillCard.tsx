@@ -14,7 +14,7 @@ function formatDate(iso: string) {
     });
 }
 
-function rupee(amount: number) {
+function formatCurrency(amount: number) {
     return `$${Number(amount).toFixed(2)}`;
 }
 
@@ -30,7 +30,7 @@ export default function BillCard({ bill }: Props) {
                 <div className={styles.cardHeader}>
                     <span className={styles.headerIcon}>☕</span>
                     <h1 className={styles.cafeName}>Barista Cafe</h1>
-                    <p className={styles.tagline}>Every cup tells a story</p>
+                    <h2 className={styles.tagline}>Every cup tells a story</h2>
                 </div>
 
                 {/* Bill meta */}
@@ -62,8 +62,8 @@ export default function BillCard({ bill }: Props) {
                             <tr key={item.id} className={styles.itemRow}>
                                 <td className={styles.td}>{item.item_name}</td>
                                 <td className={`${styles.td} ${styles.center}`}>{item.quantity}</td>
-                                <td className={`${styles.td} ${styles.right}`}>{rupee(item.price)}</td>
-                                <td className={`${styles.td} ${styles.right}`}>{rupee(item.item_total)}</td>
+                                <td className={`${styles.td} ${styles.right}`}>{formatCurrency(item.price)}</td>
+                                <td className={`${styles.td} ${styles.right}`}>{formatCurrency(item.item_total)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -75,15 +75,15 @@ export default function BillCard({ bill }: Props) {
                 <div className={styles.totals}>
                     <div className={styles.totalRow}>
                         <span>Subtotal</span>
-                        <span>{rupee(bill.subtotal)}</span>
+                        <span>{formatCurrency(bill.subtotal)}</span>
                     </div>
                     <div className={styles.totalRow}>
                         <span>GST ({bill.tax_rate}%)</span>
-                        <span>{rupee(bill.tax_amount)}</span>
+                        <span>{formatCurrency(bill.tax_amount)}</span>
                     </div>
                     <div className={`${styles.totalRow} ${styles.grandTotal}`}>
                         <span>Total</span>
-                        <span>{rupee(bill.total_amount)}</span>
+                        <span>{formatCurrency(bill.total_amount)}</span>
                     </div>
                 </div>
 
