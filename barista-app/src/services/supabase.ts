@@ -48,6 +48,8 @@ export interface BillPayload {
   tax_rate:     number;
   tax_amount:   number;
   total_amount: number;
+  payment_status: 'paid' | 'unpaid';
+  payment_method?: string;
 }
 
 export interface BillItemPayload {

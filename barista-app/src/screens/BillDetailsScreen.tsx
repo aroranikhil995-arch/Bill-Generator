@@ -40,9 +40,9 @@ export default function BillDetailsScreen({ route }: Props) {
         <View style={styles.itemRow}>
             <View style={styles.itemMain}>
                 <Text style={styles.itemName}>{item.item_name}</Text>
-                <Text style={styles.itemMeta}>${item.price.toFixed(2)} x {item.quantity}</Text>
+                <Text style={styles.itemMeta}>Rs.{item.price.toFixed(2)} x {item.quantity}</Text>
             </View>
-            <Text style={styles.itemTotal}>${item.item_total.toFixed(2)}</Text>
+            <Text style={styles.itemTotal}>Rs.{item.item_total.toFixed(2)}</Text>
         </View>
     );
 
@@ -82,7 +82,7 @@ export default function BillDetailsScreen({ route }: Props) {
                         <View style={styles.totalsContainer}>
                             <View style={styles.totalRow}>
                                 <Text style={styles.totalLabel}>Grand Total</Text>
-                                <Text style={styles.grandTotalValue}>${bill.total_amount.toFixed(2)}</Text>
+                                <Text style={styles.grandTotalValue}>Rs.{bill.total_amount.toFixed(2)}</Text>
                             </View>
                         </View>
 

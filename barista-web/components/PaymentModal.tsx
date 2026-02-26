@@ -43,7 +43,7 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         try {
-            const { error } = await supabase
+            const { error: updateError } = await supabase
                 .from('bills')
                 .update({
                     payment_status: 'paid',
@@ -51,15 +51,18 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
                 })
                 .eq('id', billId);
 
-            if (error) throw error;
+            if (updateError) {
+                console.error('Supabase update error:', updateError);
+                throw new Error(updateError.message);
+            }
 
             setIsDone(true);
             setTimeout(() => {
-                onSuccess(); // This calls window.location.reload() in ActionButtons.tsx
+                onSuccess();
             }, 1500);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Payment update failed:', error);
-            alert('Simulation failed, please try again.');
+            alert(`Payment could not be recorded: ${error.message || 'Unknown error'}`);
         } finally {
             setProcessing(false);
         }
@@ -72,7 +75,7 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
                     <div className={styles.success}>
                         <div className={styles.successIcon}>✅</div>
                         <h2 className={styles.title}>Payment Successful!</h2>
-                        <p>Thank you for your payment of ${amount.toFixed(2)}</p>
+                        <p>Thank you for your payment of Rs.{amount.toFixed(2)}</p>
                         <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '10px' }}>Refreshing your bill...</p>
                     </div>
                 </div>
@@ -85,7 +88,7 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <div className={styles.title}>Checkout</div>
-                    <div className={styles.amount}>${amount.toFixed(2)}</div>
+                    <div className={styles.amount}>Rs.{amount.toFixed(2)}</div>
                 </div>
 
                 <div className={styles.content}>
@@ -167,7 +170,7 @@ export default function PaymentModal({ billId, amount, onClose, onSuccess }: Pro
                         disabled={!selected || !isFormValid() || processing}
                         onClick={handlePay}
                     >
-                        {processing ? 'Processing Securely...' : `Pay $${amount.toFixed(2)}`}
+                        {processing ? 'Processing Securely...' : `Pay Rs.${amount.toFixed(2)}`}
                     </button>
                     <button className={styles.cancelBtn} onClick={onClose} disabled={processing}>
                         Cancel

@@ -30,7 +30,7 @@ export default function MenuSelectionScreen({ navigation }: Props) {
                     <Text style={styles.itemEmoji}>{item.emoji}</Text>
                     <View>
                         <Text style={styles.itemName}>{item.name}</Text>
-                        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                        <Text style={styles.itemPrice}>Rs.{item.price.toFixed(2)}</Text>
                     </View>
                 </View>
                 <View style={styles.qtyRow}>

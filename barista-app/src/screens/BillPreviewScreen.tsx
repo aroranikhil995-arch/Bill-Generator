@@ -34,7 +34,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
         try {
             const id = await generateBillId();
             const result = await saveBill(
-                { id, subtotal, tax_rate: TAX_RATE, tax_amount: taxAmount, total_amount: total },
+                { id, subtotal, tax_rate: TAX_RATE, tax_amount: taxAmount, total_amount: total, payment_status: 'unpaid' },
                 items.map((i) => ({
                     bill_id: id,
                     item_name: i.name,
@@ -134,7 +134,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
                 await BluetoothEscposPrinter.printColumn(
                     [14, 10, 8],
                     [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                    [item.name.substring(0, 14), `$${item.price.toFixed(2)}x${item.quantity}`, `$${item.itemTotal.toFixed(2)}`],
+                    [item.name.substring(0, 14), `Rs.${item.price.toFixed(2)}x${item.quantity}`, `Rs.${item.itemTotal.toFixed(2)}`],
                     {}
                 );
             }
@@ -144,13 +144,13 @@ export default function BillPreviewScreen({ navigation }: Props) {
             await BluetoothEscposPrinter.printColumn(
                 [23, 9],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['Subtotal:', `$${subtotal.toFixed(2)}`],
+                ['Subtotal:', `Rs.${subtotal.toFixed(2)}`],
                 {}
             );
             await BluetoothEscposPrinter.printColumn(
                 [23, 9],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['GST (5%):', `$${taxAmount.toFixed(2)}`],
+                ['GST (5%):', `Rs.${taxAmount.toFixed(2)}`],
                 {}
             );
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
@@ -158,7 +158,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             await BluetoothEscposPrinter.printColumn(
                 [23, 9],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['TOTAL:', `$${total.toFixed(2)}`],
+                ['TOTAL:', `Rs.${total.toFixed(2)}`],
                 {}
             );
             await BluetoothEscposPrinter.setBlob(0);
@@ -208,8 +208,8 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     {items.map((item) => (
                         <View key={item.id} style={styles.tableRow}>
                             <Text style={styles.col1} numberOfLines={1}>{item.name}</Text>
-                            <Text style={styles.colQty}>${item.price.toFixed(2)} x {item.quantity}</Text>
-                            <Text style={styles.colAmt}>${item.itemTotal.toFixed(2)}</Text>
+                            <Text style={styles.colQty}>Rs.{item.price.toFixed(2)} x {item.quantity}</Text>
+                            <Text style={styles.colAmt}>Rs.{item.itemTotal.toFixed(2)}</Text>
                         </View>
                     ))}
 
@@ -219,15 +219,15 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     <View style={styles.totalsBlock}>
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Subtotal</Text>
-                            <Text style={styles.totalValue}>${subtotal.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>Rs.{subtotal.toFixed(2)}</Text>
                         </View>
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>GST ({TAX_RATE}%)</Text>
-                            <Text style={styles.totalValue}>${taxAmount.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>Rs.{taxAmount.toFixed(2)}</Text>
                         </View>
                         <View style={[styles.totalRow, styles.grandTotalRow]}>
                             <Text style={styles.grandTotalLabel}>TOTAL</Text>
-                            <Text style={styles.grandTotalValue}>${total.toFixed(2)}</Text>
+                            <Text style={styles.grandTotalValue}>Rs.{total.toFixed(2)}</Text>
                         </View>
                     </View>
 

@@ -81,7 +81,7 @@ export default function BillsListScreen() {
                             <Text style={styles.statusText}>{isPaid ? 'PAID' : 'UNPAID'}</Text>
                         </View>
                     </View>
-                    <Text style={styles.billTotal}>${item.total_amount.toFixed(2)}</Text>
+                    <Text style={styles.billTotal}>Rs.{item.total_amount.toFixed(2)}</Text>
                 </View>
                 <Text style={styles.billDate}>{dateString}</Text>
             </TouchableOpacity>
@@ -116,7 +116,7 @@ export default function BillsListScreen() {
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
                     <Text style={styles.summaryLabel}>Total Revenue</Text>
-                    <Text style={styles.summaryValue}>${totalRevenue.toFixed(2)}</Text>
+                    <Text style={styles.summaryValue}>Rs.{totalRevenue.toFixed(2)}</Text>
                 </View>
             </View>
 
