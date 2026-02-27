@@ -161,11 +161,13 @@ export default function ActionButtons({ bill, billRef }: Props) {
                     <span>⬇️</span> {downloading ? 'PDF' : 'Download PDF'}
                 </button>
 
+                {/* Payment handled by Merchant App now
                 {bill.payment_status === 'unpaid' && (
                     <button className={`${styles.btn} ${styles.pay}`} onClick={() => setShowPayment(true)}>
                         <span>💰</span> Pay Now
                     </button>
                 )}
+                */}
 
                 <button className={`${styles.btn} ${styles.tally}`} onClick={handleExportTally}>
                     <span>📊</span> Tally XML
