@@ -7,7 +7,6 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
-import { TouchableOpacity, Alert, Modal, Platform, PermissionsAndroid } from 'react-native';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
 const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
@@ -288,7 +287,7 @@ export default function BillDetailsScreen({ route }: Props) {
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <View style={styles.safeArea}>
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.title}>Barista Cafe</Text>
@@ -448,7 +447,7 @@ export default function BillDetailsScreen({ route }: Props) {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -605,6 +604,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginTop: 20,
+        marginBottom: 20,
         marginHorizontal: 16,
         gap: 12,
     },
