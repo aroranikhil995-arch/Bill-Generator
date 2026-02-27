@@ -1,9 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Bill } from '@/lib/supabase';
-import PaymentModal from './PaymentModal';
 import styles from './ActionButtons.module.css';
 
 interface Props {
@@ -12,10 +10,8 @@ interface Props {
 }
 
 export default function ActionButtons({ bill, billRef }: Props) {
-    const router = useRouter();
     const [downloading, setDownloading] = useState(false);
     const [copied, setCopied] = useState(false);
-    const [showPayment, setShowPayment] = useState(false);
 
     // ─── Print ─────────────────────────────────────────────────────────────────
     const handlePrint = () => window.print();
@@ -137,15 +133,6 @@ export default function ActionButtons({ bill, billRef }: Props) {
         }
     };
 
-    const handleSuccess = () => {
-        setShowPayment(false);
-        router.refresh();
-        // Falling back to hard reload to ensure Supabase re-fetches
-        setTimeout(() => {
-            window.location.href = window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'r=' + Math.random();
-        }, 500);
-    };
-
     return (
         <>
             <div className={`${styles.container} no-print`}>
@@ -161,14 +148,6 @@ export default function ActionButtons({ bill, billRef }: Props) {
                     <span>⬇️</span> {downloading ? 'PDF' : 'Download PDF'}
                 </button>
 
-                {/* Payment handled by Merchant App now
-                {bill.payment_status === 'unpaid' && (
-                    <button className={`${styles.btn} ${styles.pay}`} onClick={() => setShowPayment(true)}>
-                        <span>💰</span> Pay Now
-                    </button>
-                )}
-                */}
-
                 <button className={`${styles.btn} ${styles.tally}`} onClick={handleExportTally}>
                     <span>📊</span> Tally XML
                 </button>
@@ -177,15 +156,6 @@ export default function ActionButtons({ bill, billRef }: Props) {
                     <span>📤</span> {copied ? 'Copied' : 'Share'}
                 </button>
             </div>
-
-            {showPayment && (
-                <PaymentModal
-                    billId={bill.id}
-                    amount={bill.total_amount}
-                    onClose={() => setShowPayment(false)}
-                    onSuccess={handleSuccess}
-                />
-            )}
         </>
     );
 }
