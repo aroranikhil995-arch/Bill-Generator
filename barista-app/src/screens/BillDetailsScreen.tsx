@@ -9,6 +9,7 @@ import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import { generatePDF } from 'react-native-html-to-pdf';
 import { TouchableOpacity, Alert, Modal, Platform, PermissionsAndroid } from 'react-native';
+import { CustomAlertData } from '../store/alertStore';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
 const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
@@ -278,7 +279,7 @@ export default function BillDetailsScreen({ route }: Props) {
                     const hasPermission = await requestStoragePermission();
                     if (!hasPermission) {
                         // Fallback to internal storage or just share
-                        Alert.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
+                        CustomAlertData.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
                         return;
                     }
                 }
@@ -291,14 +292,14 @@ export default function BillDetailsScreen({ route }: Props) {
                 }
                 await RNFS.copyFile(file.filePath, destPath);
 
-                Alert.alert("Success", `PDF downloaded to:\n${destPath}`);
+                CustomAlertData.alert("Success", `PDF downloaded to:\n${destPath}`);
             } catch (pdfError) {
                 console.error("PDF Generator error:", pdfError);
-                Alert.alert("Error", "PDF generator threw an error.");
+                CustomAlertData.alert("Error", "PDF generator threw an error.");
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Failed to generate PDF');
+            CustomAlertData.alert('Error', 'Failed to generate PDF');
         }
     };
 
@@ -369,7 +370,7 @@ export default function BillDetailsScreen({ route }: Props) {
             if (Platform.OS === 'android') {
                 const hasPermission = await requestStoragePermission();
                 if (!hasPermission) {
-                    Alert.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
+                    CustomAlertData.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
                     return;
                 }
             }
@@ -377,11 +378,11 @@ export default function BillDetailsScreen({ route }: Props) {
             const path = getDownloadPath(`tally-${bill.id}.xml`);
             await RNFS.writeFile(path, xml.trim(), 'utf8');
 
-            Alert.alert("Success", `Tally XML downloaded to:\n${path}`);
+            CustomAlertData.alert("Success", `Tally XML downloaded to:\n${path}`);
 
         } catch (error) {
             console.error('Error exporting Tally XML: ', error);
-            Alert.alert("Error", "Could not export Tally file.");
+            CustomAlertData.alert("Error", "Could not export Tally file.");
         }
     };
 
@@ -413,10 +414,10 @@ export default function BillDetailsScreen({ route }: Props) {
             setBill(prev => ({ ...prev, payment_status: 'paid' }));
             setShowPaymentModal(false);
             setSelectedPayMethod(null);
-            Alert.alert("Success", `Payment recorded via ${selectedPayMethod}.`);
+            CustomAlertData.alert("Success", `Payment recorded via ${selectedPayMethod}.`);
         } catch (error) {
             console.error("Payment update failed", error);
-            Alert.alert("Error", "Could not update payment status.");
+            CustomAlertData.alert("Error", "Could not update payment status.");
         } finally {
             setUpdatingPayment(false);
         }

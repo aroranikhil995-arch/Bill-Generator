@@ -11,6 +11,7 @@ import { useCartStore } from '../store/cartStore';
 import { generateBillId, saveBill } from '../services/supabase';
 import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import { TAX_RATE } from '../data/menu';
+import { CustomAlertData } from '../store/alertStore';
 
 const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
 
@@ -46,7 +47,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             if (result.success) {
                 setBillId(id);
             } else {
-                Alert.alert('Save Failed', result.error ?? 'Unknown error. Please try again.');
+                CustomAlertData.alert('Save Failed', result.error ?? 'Unknown error. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -56,7 +57,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
     // ── Step 2: Print via Bluetooth ──────────────────────────────────────────────
     const handlePrint = async () => {
         if (!billId) {
-            Alert.alert('Save first', 'Please save the bill before printing.');
+            CustomAlertData.alert('Save first', 'Please save the bill before printing.');
             return;
         }
 
@@ -73,7 +74,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
                     granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] !== PermissionsAndroid.RESULTS.GRANTED
                 ) {
                     console.log('[PRINT] Access Denied.');
-                    Alert.alert('Permission Denied', 'Bluetooth connection permission is required to print.');
+                    CustomAlertData.alert('Permission Denied', 'Bluetooth connection permission is required to print.');
                     return;
                 }
             } catch (err) {
@@ -92,7 +93,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             const pairedDevicesArray = await BluetoothManager.enableBluetooth();
             console.log('[PRINT] pairedDevicesArray:', pairedDevicesArray);
             if (!pairedDevicesArray || pairedDevicesArray.length === 0) {
-                Alert.alert('No Devices', 'No paired Bluetooth devices found. Please pair your printer in Android Settings.');
+                CustomAlertData.alert('No Devices', 'No paired Bluetooth devices found. Please pair your printer in Android Settings.');
                 return;
             }
 
@@ -175,7 +176,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             navigation.replace('PrintSuccess', { billId });
         } catch (err: any) {
             console.error('Print error:', err);
-            Alert.alert('Print Error', String(err));
+            CustomAlertData.alert('Print Error', String(err));
         }
     };
 
