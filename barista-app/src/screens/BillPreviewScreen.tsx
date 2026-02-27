@@ -122,9 +122,9 @@ export default function BillPreviewScreen({ navigation }: Props) {
             // Print Items List Header
             await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
             await BluetoothEscposPrinter.printColumn(
-                [14, 10, 8],
+                [16, 4, 12],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['Item', 'Price x Qty', 'Total'],
+                ['Item', 'Qty', 'Total'],
                 {}
             );
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
@@ -132,9 +132,9 @@ export default function BillPreviewScreen({ navigation }: Props) {
             // Print Items
             for (const item of items) {
                 await BluetoothEscposPrinter.printColumn(
-                    [14, 10, 8],
+                    [16, 4, 12],
                     [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                    [item.name.substring(0, 14), `Rs.${item.price.toFixed(2)}x${item.quantity}`, `Rs.${item.itemTotal.toFixed(2)}`],
+                    [item.name.substring(0, 16), item.quantity.toString(), `Rs.${item.itemTotal.toFixed(2)}`],
                     {}
                 );
             }
@@ -142,13 +142,13 @@ export default function BillPreviewScreen({ navigation }: Props) {
             // Print Totals
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
             await BluetoothEscposPrinter.printColumn(
-                [23, 9],
+                [20, 12],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
                 ['Subtotal:', `Rs.${subtotal.toFixed(2)}`],
                 {}
             );
             await BluetoothEscposPrinter.printColumn(
-                [23, 9],
+                [20, 12],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
                 ['GST (5%):', `Rs.${taxAmount.toFixed(2)}`],
                 {}
@@ -156,7 +156,7 @@ export default function BillPreviewScreen({ navigation }: Props) {
             await BluetoothEscposPrinter.printText('--------------------------------\n', {});
             await BluetoothEscposPrinter.setBlob(1);
             await BluetoothEscposPrinter.printColumn(
-                [23, 9],
+                [20, 12],
                 [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
                 ['TOTAL:', `Rs.${total.toFixed(2)}`],
                 {}
