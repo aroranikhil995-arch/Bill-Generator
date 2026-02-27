@@ -7,6 +7,7 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import { generatePDF } from 'react-native-html-to-pdf';
 import { TouchableOpacity, Alert, Modal, Platform, PermissionsAndroid } from 'react-native';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
@@ -127,17 +128,15 @@ export default function BillDetailsScreen({ route }: Props) {
                 </html>
             `;
 
-            // Requires `react-native-html-to-pdf` to be fully linked (auto-linking mostly).
-            // Check if RNHTMLtoPDF is available
-            const RNHTMLtoPDF = require('react-native-html-to-pdf');
-            if (RNHTMLtoPDF) {
+            // Generate PDF
+            try {
                 const options = {
                     html: html,
                     fileName: `bill-${bill.id}`,
                     directory: 'Documents',
                 };
 
-                const file = await RNHTMLtoPDF.convert(options);
+                const file = await generatePDF(options);
 
                 // Ensure permissions before writing
                 if (Platform.OS === 'android') {
@@ -158,8 +157,9 @@ export default function BillDetailsScreen({ route }: Props) {
                 await RNFS.copyFile(file.filePath, destPath);
 
                 Alert.alert("Success", `PDF downloaded to:\n${destPath}`);
-            } else {
-                Alert.alert("Error", "PDF generator module not available.");
+            } catch (pdfError) {
+                console.error("PDF Generator error:", pdfError);
+                Alert.alert("Error", "PDF generator threw an error.");
             }
         } catch (error) {
             console.error(error);
