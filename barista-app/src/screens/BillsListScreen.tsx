@@ -11,6 +11,8 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 
 interface Bill {
     id: string;
+    subtotal: number;
+    tax_amount: number;
     total_amount: number;
     payment_status: 'paid' | 'unpaid';
     created_at: string;
@@ -29,7 +31,7 @@ export default function BillsListScreen() {
         try {
             setLoading(true);
 
-            let query = supabase.from('bills').select('id,total_amount,payment_status,created_at').order('created_at', { ascending: false });
+            let query = supabase.from('bills').select('id,subtotal,tax_amount,total_amount,payment_status,created_at').order('created_at', { ascending: false });
 
             // Apply filters
             const now = new Date();

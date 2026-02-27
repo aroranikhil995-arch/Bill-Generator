@@ -114,15 +114,15 @@ export default function BillDetailsScreen({ route }: Props) {
                             <tr>
                                 <td>${item.item_name}</td>
                                 <td>${item.quantity}</td>
-                                <td>Rs.${item.price.toFixed(2)}</td>
-                                <td>Rs.${item.item_total.toFixed(2)}</td>
+                                <td>Rs.${(item.price || 0).toFixed(2)}</td>
+                                <td>Rs.${(item.item_total || 0).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </table>
                     <hr/>
-                    <p style="text-align: right;"><strong>Subtotal:</strong> Rs.${bill.subtotal.toFixed(2)}</p>
-                    <p style="text-align: right;"><strong>GST:</strong> Rs.${bill.tax_amount.toFixed(2)}</p>
-                    <h2 style="text-align: right;"><strong>Total:</strong> Rs.${bill.total_amount.toFixed(2)}</h2>
+                    <p style="text-align: right;"><strong>Subtotal:</strong> Rs.${(bill.subtotal || 0).toFixed(2)}</p>
+                    <p style="text-align: right;"><strong>GST:</strong> Rs.${(bill.tax_amount || 0).toFixed(2)}</p>
+                    <h2 style="text-align: right;"><strong>Total:</strong> Rs.${(bill.total_amount || 0).toFixed(2)}</h2>
                 </body>
                 </html>
             `;
@@ -214,14 +214,14 @@ export default function BillDetailsScreen({ route }: Props) {
                             <ALLLEDGERENTRIES.LIST>
                                 <LEDGERNAME>Sales</LEDGERNAME>
                                 <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
-                                <AMOUNT>${bill.subtotal}</AMOUNT>
+                                <AMOUNT>${bill.subtotal || 0}</AMOUNT>
                             </ALLLEDGERENTRIES.LIST>
 
                             <!-- Tax Ledger Entry (GST) -->
                             <ALLLEDGERENTRIES.LIST>
                                 <LEDGERNAME>Output GST</LEDGERNAME>
                                 <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
-                                <AMOUNT>${bill.tax_amount}</AMOUNT>
+                                <AMOUNT>${bill.tax_amount || 0}</AMOUNT>
                             </ALLLEDGERENTRIES.LIST>
                         </VOUCHER>
                     </TALLYMESSAGE>
