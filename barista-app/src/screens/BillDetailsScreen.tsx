@@ -64,21 +64,214 @@ export default function BillDetailsScreen({ route }: Props) {
     const handlePrint = async () => {
         try {
             const isConnected = await BluetoothEscposPrinter.printerInit();
-            // TODO: Extract print formatting logic from BillPreviewScreen into a shared utility
-            // or duplicate the printing code here for now, given time constraints.
-            // For now, let's alert the user that it's coming.
-            Alert.alert("Print", "Printing integration coming right up in the next step.");
-        } catch (e) {
-            Alert.alert('Printer Error', 'Make sure your Bluetooth printer is connected.');
+
+            console.log('[PRINT] Starting print sequence for old bill...');
+            // Print header
+            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+            await BluetoothEscposPrinter.setBlob(1);
+            await BluetoothEscposPrinter.printText('Barista Cafe\n', { widthtimes: 1, heigthtimes: 1, encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.setBlob(0);
+            await BluetoothEscposPrinter.printText('GSTIN: 07AAAAA0000A1Z5\n', { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.printText(`Bill #${bill.id}\n`, { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.printText(`${dateString}\n`, { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
+
+            // Print Items List Header
+            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+            await BluetoothEscposPrinter.printColumn(
+                [14, 10, 8],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['Item', 'Qty', 'Total'],
+                { encoding: 'UTF-8' }
+            );
+            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
+
+            // Print Items
+            for (const item of items) {
+                await BluetoothEscposPrinter.printColumn(
+                    [14, 10, 8],
+                    [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
+                    [item.item_name.substring(0, 14), `${item.quantity}`, `Rs.${item.item_total.toFixed(2)}`],
+                    { encoding: 'UTF-8' }
+                );
+            }
+
+            // Print Totals
+            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.printColumn(
+                [20, 12],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['Subtotal:', `Rs.${bill.subtotal.toFixed(2)}`],
+                { encoding: 'UTF-8' }
+            );
+            await BluetoothEscposPrinter.printColumn(
+                [20, 12],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['GST (5%):', `Rs.${bill.tax_amount.toFixed(2)}`],
+                { encoding: 'UTF-8' }
+            );
+            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.setBlob(1);
+            await BluetoothEscposPrinter.printColumn(
+                [20, 12],
+                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                ['TOTAL:', `Rs.${bill.total_amount.toFixed(2)}`],
+                { encoding: 'UTF-8' }
+            );
+            await BluetoothEscposPrinter.setBlob(0);
+            await BluetoothEscposPrinter.printText('--------------------------------\n\n', { encoding: 'UTF-8' });
+
+            // Print QR Code
+            const qrUrlForPrint = encodeURI(`${WEB_BASE_URL}/bill/${bill.id}`);
+            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+            await BluetoothEscposPrinter.printText('Scan to view your bill online\n', { encoding: 'UTF-8' });
+            await BluetoothEscposPrinter.printQRCode(qrUrlForPrint, 280, BluetoothEscposPrinter.ERROR_CORRECTION.M);
+            await BluetoothEscposPrinter.printText('\n\n\n', { encoding: 'UTF-8' });
+
+        } catch (e: any) {
+            console.error('Print error:', e);
+            Alert.alert('Printer Error', String(e));
         }
     };
 
     const handleDownloadPDF = async () => {
-        Alert.alert("Download PDF", "Native PDF generation coming right up.");
+        try {
+            // A simple implementation using react-native-html-to-pdf
+            // We generate a basic HTML string representation of the bill
+            const html = `
+                <html>
+                <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h1>Barista Cafe</h1>
+                    <p><strong>Order ID:</strong> ${bill.id}</p>
+                    <p><strong>Date:</strong> ${dateString}</p>
+                    <p><strong>Payment Status:</strong> ${bill.payment_status.toUpperCase()}</p>
+                    <hr/>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="text-align: left; border-bottom: 1px solid #ccc;">
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.item_name}</td>
+                                <td>${item.quantity}</td>
+                                <td>Rs.${item.price.toFixed(2)}</td>
+                                <td>Rs.${item.item_total.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    <hr/>
+                    <p style="text-align: right;"><strong>Subtotal:</strong> Rs.${bill.subtotal.toFixed(2)}</p>
+                    <p style="text-align: right;"><strong>GST:</strong> Rs.${bill.tax_amount.toFixed(2)}</p>
+                    <h2 style="text-align: right;"><strong>Total:</strong> Rs.${bill.total_amount.toFixed(2)}</h2>
+                </body>
+                </html>
+            `;
+
+            // Requires `react-native-html-to-pdf` to be fully linked (auto-linking mostly).
+            // Check if RNHTMLtoPDF is available
+            const RNHTMLtoPDF = require('react-native-html-to-pdf');
+            if (RNHTMLtoPDF) {
+                let options = {
+                    html: html,
+                    fileName: `bill-${bill.id}`,
+                    directory: 'Documents',
+                };
+
+                let file = await RNHTMLtoPDF.convert(options);
+
+                await Share.open({
+                    url: `file://${file.filePath}`,
+                    title: 'Download PDF',
+                });
+            } else {
+                Alert.alert("Error", "PDF generator module not available.");
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to generate PDF');
+        }
     };
 
     const handleExportTally = async () => {
-        Alert.alert("Tally XML", "Tally XML export coming right up.");
+        try {
+            // Generate Inventory Entries for XML
+            const inventoryEntries = items.map(item => `
+                            <ALLINVENTORYENTRIES.LIST>
+                                <STOCKITEMNAME>${item.item_name}</STOCKITEMNAME>
+                                <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                                <RATE>${item.price}</RATE>
+                                <AMOUNT>${item.item_total}</AMOUNT>
+                                <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>
+                                <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>
+                            </ALLINVENTORYENTRIES.LIST>`).join('');
+
+            // Format date as YYYYMMDD for Tally
+            const tallyDate = date.toISOString().split('T')[0].replace(/-/g, '');
+
+            const xml = `<?xml version="1.0"?>
+    <ENVELOPE>
+        <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
+        <BODY>
+            <IMPORTDATA>
+                <REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME></REQUESTDESC>
+                <REQUESTDATA>
+                    <TALLYMESSAGE xmlns:UDF="TallyUDF">
+                        <VOUCHER VCHTYPE="Sales" ACTION="Create">
+                            <DATE>${tallyDate}</DATE>
+                            <VOUCHERNUMBER>${bill.id}</VOUCHERNUMBER>
+                            <REFERENCE>${bill.id}</REFERENCE>
+                            <PARTYLEDGERNAME>Cash</PARTYLEDGERNAME>
+                            <STATENAME>Delhi</STATENAME>
+                            <FBTPAYMENTTYPE>Default</FBTPAYMENTTYPE>
+                            <PERSISTEDVIEW>InvoiceView</PERSISTEDVIEW>
+                            
+                            <!-- Party Entry (Total Amount) -->
+                            <ALLLEDGERENTRIES.LIST>
+                                <LEDGERNAME>Cash</LEDGERNAME>
+                                <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+                                <AMOUNT>-${bill.total_amount}</AMOUNT>
+                            </ALLLEDGERENTRIES.LIST>
+
+                            <!-- Items & Inventory Breakdown -->
+                            ${inventoryEntries}
+
+                            <!-- Sales Ledger Entry (Subtotal) -->
+                            <ALLLEDGERENTRIES.LIST>
+                                <LEDGERNAME>Sales</LEDGERNAME>
+                                <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                                <AMOUNT>${bill.subtotal}</AMOUNT>
+                            </ALLLEDGERENTRIES.LIST>
+
+                            <!-- Tax Ledger Entry (GST) -->
+                            <ALLLEDGERENTRIES.LIST>
+                                <LEDGERNAME>Output GST</LEDGERNAME>
+                                <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+                                <AMOUNT>${bill.tax_amount}</AMOUNT>
+                            </ALLLEDGERENTRIES.LIST>
+                        </VOUCHER>
+                    </TALLYMESSAGE>
+                </REQUESTDATA>
+            </IMPORTDATA>
+        </BODY>
+    </ENVELOPE>`;
+
+            const path = `${RNFS.DocumentDirectoryPath}/tally-${bill.id}.xml`;
+            await RNFS.writeFile(path, xml.trim(), 'utf8');
+
+            await Share.open({
+                title: `Tally XML - ${bill.id}`,
+                url: `file://${path}`,
+                type: 'application/xml',
+                message: `Tally Data for Bill ${bill.id}`,
+            });
+
+        } catch (error) {
+            console.error('Error exporting Tally XML: ', error);
+            Alert.alert("Error", "Could not export Tally file.");
+        }
     };
 
     const handleShare = async () => {
