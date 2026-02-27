@@ -5,10 +5,9 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase, BillItemPayload, BillPayload } from '../services/supabase';
 import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
-import { BluetoothEscposPrinter } from 'react-native-bluetooth-escpos-printer';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
-import { TouchableOpacity, Alert, Modal } from 'react-native';
+import { TouchableOpacity, Alert, Modal, Platform } from 'react-native';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
 const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
@@ -24,6 +23,7 @@ export default function BillDetailsScreen({ route }: Props) {
     const [loading, setLoading] = useState(true);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [updatingPayment, setUpdatingPayment] = useState(false);
+    const [selectedPayMethod, setSelectedPayMethod] = useState<'QR Code' | 'Card' | 'Cash' | null>(null);
 
     useEffect(() => {
         const fetchItems = async () => {
@@ -61,77 +61,10 @@ export default function BillDetailsScreen({ route }: Props) {
 
     // ─── Actions ─────────────────────────────────────────────────────────────
 
-    const handlePrint = async () => {
-        try {
-            const isConnected = await BluetoothEscposPrinter.printerInit();
-
-            console.log('[PRINT] Starting print sequence for old bill...');
-            // Print header
-            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
-            await BluetoothEscposPrinter.setBlob(1);
-            await BluetoothEscposPrinter.printText('Barista Cafe\n', { widthtimes: 1, heigthtimes: 1, encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.setBlob(0);
-            await BluetoothEscposPrinter.printText('GSTIN: 07AAAAA0000A1Z5\n', { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.printText(`Bill #${bill.id}\n`, { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.printText(`${dateString}\n`, { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
-
-            // Print Items List Header
-            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
-            await BluetoothEscposPrinter.printColumn(
-                [14, 10, 8],
-                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['Item', 'Qty', 'Total'],
-                { encoding: 'UTF-8' }
-            );
-            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
-
-            // Print Items
-            for (const item of items) {
-                await BluetoothEscposPrinter.printColumn(
-                    [14, 10, 8],
-                    [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.CENTER, BluetoothEscposPrinter.ALIGN.RIGHT],
-                    [item.item_name.substring(0, 14), `${item.quantity}`, `Rs.${item.item_total.toFixed(2)}`],
-                    { encoding: 'UTF-8' }
-                );
-            }
-
-            // Print Totals
-            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.printColumn(
-                [20, 12],
-                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['Subtotal:', `Rs.${bill.subtotal.toFixed(2)}`],
-                { encoding: 'UTF-8' }
-            );
-            await BluetoothEscposPrinter.printColumn(
-                [20, 12],
-                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['GST (5%):', `Rs.${bill.tax_amount.toFixed(2)}`],
-                { encoding: 'UTF-8' }
-            );
-            await BluetoothEscposPrinter.printText('--------------------------------\n', { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.setBlob(1);
-            await BluetoothEscposPrinter.printColumn(
-                [20, 12],
-                [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                ['TOTAL:', `Rs.${bill.total_amount.toFixed(2)}`],
-                { encoding: 'UTF-8' }
-            );
-            await BluetoothEscposPrinter.setBlob(0);
-            await BluetoothEscposPrinter.printText('--------------------------------\n\n', { encoding: 'UTF-8' });
-
-            // Print QR Code
-            const qrUrlForPrint = encodeURI(`${WEB_BASE_URL}/bill/${bill.id}`);
-            await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
-            await BluetoothEscposPrinter.printText('Scan to view your bill online\n', { encoding: 'UTF-8' });
-            await BluetoothEscposPrinter.printQRCode(qrUrlForPrint, 280, BluetoothEscposPrinter.ERROR_CORRECTION.M);
-            await BluetoothEscposPrinter.printText('\n\n\n', { encoding: 'UTF-8' });
-
-        } catch (e: any) {
-            console.error('Print error:', e);
-            Alert.alert('Printer Error', String(e));
-        }
+    // Platform-specific download directory
+    const getDownloadPath = (filename: string) => {
+        const dir = Platform.OS === 'android' ? RNFS.DownloadDirectoryPath : RNFS.DocumentDirectoryPath;
+        return `${dir}/${filename}`;
     };
 
     const handleDownloadPDF = async () => {
@@ -174,18 +107,23 @@ export default function BillDetailsScreen({ route }: Props) {
             // Check if RNHTMLtoPDF is available
             const RNHTMLtoPDF = require('react-native-html-to-pdf');
             if (RNHTMLtoPDF) {
-                let options = {
+                const options = {
                     html: html,
                     fileName: `bill-${bill.id}`,
                     directory: 'Documents',
                 };
 
-                let file = await RNHTMLtoPDF.convert(options);
+                const file = await RNHTMLtoPDF.convert(options);
 
-                await Share.open({
-                    url: `file://${file.filePath}`,
-                    title: 'Download PDF',
-                });
+                // Copy to public downloads folder
+                const destPath = getDownloadPath(`bill-${bill.id}.pdf`);
+
+                if (await RNFS.exists(destPath)) {
+                    await RNFS.unlink(destPath);
+                }
+                await RNFS.copyFile(file.filePath, destPath);
+
+                Alert.alert("Success", `PDF downloaded to: ${destPath}`);
             } else {
                 Alert.alert("Error", "PDF generator module not available.");
             }
@@ -258,15 +196,10 @@ export default function BillDetailsScreen({ route }: Props) {
         </BODY>
     </ENVELOPE>`;
 
-            const path = `${RNFS.DocumentDirectoryPath}/tally-${bill.id}.xml`;
+            const path = getDownloadPath(`tally-${bill.id}.xml`);
             await RNFS.writeFile(path, xml.trim(), 'utf8');
 
-            await Share.open({
-                title: `Tally XML - ${bill.id}`,
-                url: `file://${path}`,
-                type: 'application/xml',
-                message: `Tally Data for Bill ${bill.id}`,
-            });
+            Alert.alert("Success", `Tally XML downloaded to: ${path}`);
 
         } catch (error) {
             console.error('Error exporting Tally XML: ', error);
@@ -301,7 +234,8 @@ export default function BillDetailsScreen({ route }: Props) {
 
             setBill(prev => ({ ...prev, payment_status: 'paid' }));
             setShowPaymentModal(false);
-            Alert.alert("Success", `Payment recorded via ${method}.`);
+            setSelectedPayMethod(null);
+            Alert.alert("Success", `Payment recorded via ${selectedPayMethod}.`);
         } catch (error) {
             console.error("Payment update failed", error);
             Alert.alert("Error", "Could not update payment status.");
@@ -363,22 +297,18 @@ export default function BillDetailsScreen({ route }: Props) {
             {/* Action Buttons Section */}
             {!loading && (
                 <View style={styles.actionGrid}>
-                    <TouchableOpacity style={[styles.actionBtn, styles.printBtn]} onPress={handlePrint} disabled={updatingPayment}>
-                        <Text style={styles.btnText}>🖨️ Print</Text>
-                    </TouchableOpacity>
-
                     <TouchableOpacity style={[styles.actionBtn, styles.pdfBtn]} onPress={handleDownloadPDF} disabled={updatingPayment}>
-                        <Text style={styles.btnText}>⬇️ Download PDF</Text>
+                        <Text style={styles.btnText}>⬇️ PDF</Text>
                     </TouchableOpacity>
 
                     {bill.payment_status === 'unpaid' && (
                         <TouchableOpacity style={[styles.actionBtn, styles.payBtn]} onPress={() => setShowPaymentModal(true)} disabled={updatingPayment}>
-                            <Text style={styles.btnTextLight}>💰 Pay Now</Text>
+                            <Text style={styles.btnTextLight}>💰 Pay</Text>
                         </TouchableOpacity>
                     )}
 
                     <TouchableOpacity style={[styles.actionBtn, styles.tallyBtn]} onPress={handleExportTally} disabled={updatingPayment}>
-                        <Text style={styles.btnTextLight}>📊 Tally XML</Text>
+                        <Text style={styles.btnTextLight}>📊 Tally</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.actionBtn, styles.shareBtn]} onPress={handleShare} disabled={updatingPayment}>
@@ -399,31 +329,79 @@ export default function BillDetailsScreen({ route }: Props) {
                         {updatingPayment ? (
                             <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: 30 }} />
                         ) : (
-                            <View style={styles.paymentOptions}>
-                                <TouchableOpacity style={styles.payOptionBtn} onPress={() => handlePaymentAction('QR Code')}>
-                                    <Text style={styles.payOptionIcon}>📱</Text>
-                                    <Text style={styles.payOptionText}>QR Code</Text>
-                                </TouchableOpacity>
+                            <View>
+                                {/* Methods */}
+                                <View style={styles.paymentOptions}>
+                                    <TouchableOpacity
+                                        style={[styles.payOptionBtn, selectedPayMethod === 'QR Code' && styles.selectedOption]}
+                                        onPress={() => setSelectedPayMethod('QR Code')}
+                                    >
+                                        <Text style={styles.payOptionIcon}>📱</Text>
+                                        <Text style={[styles.payOptionText, selectedPayMethod === 'QR Code' && styles.selectedOptionText]}>QR Code</Text>
+                                    </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.payOptionBtn} onPress={() => handlePaymentAction('Card')}>
-                                    <Text style={styles.payOptionIcon}>💳</Text>
-                                    <Text style={styles.payOptionText}>Card</Text>
-                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.payOptionBtn, selectedPayMethod === 'Card' && styles.selectedOption]}
+                                        onPress={() => setSelectedPayMethod('Card')}
+                                    >
+                                        <Text style={styles.payOptionIcon}>💳</Text>
+                                        <Text style={[styles.payOptionText, selectedPayMethod === 'Card' && styles.selectedOptionText]}>Card</Text>
+                                    </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.payOptionBtn} onPress={() => handlePaymentAction('Cash')}>
-                                    <Text style={styles.payOptionIcon}>💵</Text>
-                                    <Text style={styles.payOptionText}>Cash</Text>
-                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.payOptionBtn, selectedPayMethod === 'Cash' && styles.selectedOption]}
+                                        onPress={() => setSelectedPayMethod('Cash')}
+                                    >
+                                        <Text style={styles.payOptionIcon}>💵</Text>
+                                        <Text style={[styles.payOptionText, selectedPayMethod === 'Cash' && styles.selectedOptionText]}>Cash</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Sample Content based on Selection */}
+                                {selectedPayMethod === 'QR Code' && (
+                                    <View style={styles.methodPreview}>
+                                        <QRCode value="upi://pay?pa=merchant@upi&pn=Barista" size={120} />
+                                        <Text style={styles.previewText}>Ask customer to scan</Text>
+                                    </View>
+                                )}
+                                {selectedPayMethod === 'Card' && (
+                                    <View style={styles.methodPreview}>
+                                        <Text style={{ fontSize: 40 }}>💳 Terminal</Text>
+                                        <Text style={styles.previewText}>Waiting for tape / insert...</Text>
+                                    </View>
+                                )}
+                                {selectedPayMethod === 'Cash' && (
+                                    <View style={styles.methodPreview}>
+                                        <Text style={{ fontSize: 40 }}>💵 Cash</Text>
+                                        <Text style={styles.previewText}>Receive cash from customer</Text>
+                                    </View>
+                                )}
+
+                                {/* Action Buttons */}
+                                <View style={styles.modalActionButtons}>
+                                    <TouchableOpacity
+                                        style={styles.cancelModalBtnRow}
+                                        onPress={() => {
+                                            setShowPaymentModal(false);
+                                            setSelectedPayMethod(null);
+                                        }}
+                                        disabled={updatingPayment}
+                                    >
+                                        <Text style={styles.cancelModalTxtRow}>Cancel</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[styles.acceptModalBtn, !selectedPayMethod && styles.acceptModalBtnDisabled]}
+                                        onPress={() => {
+                                            if (selectedPayMethod) handlePaymentAction(selectedPayMethod);
+                                        }}
+                                        disabled={!selectedPayMethod || updatingPayment}
+                                    >
+                                        <Text style={styles.acceptModalTxt}>Accept</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         )}
-
-                        <TouchableOpacity
-                            style={styles.cancelModalBtn}
-                            onPress={() => setShowPaymentModal(false)}
-                            disabled={updatingPayment}
-                        >
-                            <Text style={styles.cancelModalTxt}>Cancel</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
@@ -584,7 +562,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginTop: 20,
-        gap: 10,
+        gap: 12,
     },
     actionBtn: {
         width: '48%',
@@ -595,11 +573,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         ...Shadow.card,
     },
-    printBtn: {
-        backgroundColor: Colors.surface,
-        borderWidth: 1,
-        borderColor: Colors.border,
-    },
     pdfBtn: {
         backgroundColor: Colors.surface,
         borderWidth: 1,
@@ -607,17 +580,14 @@ const styles = StyleSheet.create({
     },
     payBtn: {
         backgroundColor: Colors.primary,
-        width: '100%',
     },
     tallyBtn: {
         backgroundColor: '#1E3A8A', // A distinct blue for Tally
-        width: '100%',
     },
     shareBtn: {
         backgroundColor: Colors.surface,
         borderWidth: 1,
         borderColor: Colors.border,
-        width: '100%', // full width
     },
     btnText: {
         fontSize: FontSize.md,
@@ -673,6 +643,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.border,
     },
+    selectedOption: {
+        borderColor: Colors.primary,
+        backgroundColor: '#F3ECE7',
+        borderWidth: 2,
+    },
     payOptionIcon: {
         fontSize: 32,
         marginBottom: 8,
@@ -682,15 +657,59 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: Colors.text,
     },
-    cancelModalBtn: {
+    selectedOptionText: {
+        color: Colors.primary,
+        fontWeight: '800',
+    },
+    methodPreview: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 32,
+        marginBottom: 24,
+        backgroundColor: Colors.bg,
+        borderRadius: Radius.md,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        borderStyle: 'dashed',
+    },
+    previewText: {
+        marginTop: 12,
+        fontSize: FontSize.sm,
+        color: Colors.textMuted,
+        fontWeight: '600',
+    },
+    modalActionButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    cancelModalBtnRow: {
+        flex: 1,
         paddingVertical: 16,
         alignItems: 'center',
         borderRadius: Radius.md,
         backgroundColor: Colors.bg,
+        borderWidth: 1,
+        borderColor: Colors.border,
     },
-    cancelModalTxt: {
+    cancelModalTxtRow: {
         fontSize: FontSize.md,
         fontWeight: '600',
         color: Colors.textMuted,
+    },
+    acceptModalBtn: {
+        flex: 1,
+        paddingVertical: 16,
+        alignItems: 'center',
+        borderRadius: Radius.md,
+        backgroundColor: Colors.primary,
+    },
+    acceptModalBtnDisabled: {
+        backgroundColor: Colors.border,
+    },
+    acceptModalTxt: {
+        fontSize: FontSize.md,
+        fontWeight: '600',
+        color: '#FFFFFF',
     },
 });
