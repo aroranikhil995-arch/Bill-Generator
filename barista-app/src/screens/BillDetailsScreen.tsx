@@ -7,7 +7,7 @@ import { Colors, FontSize, Radius, Shadow } from '../theme/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
-import { TouchableOpacity, Alert, Modal, Platform } from 'react-native';
+import { TouchableOpacity, Alert, Modal, Platform, PermissionsAndroid } from 'react-native';
 
 // ── Vercel deployment URL ─────────────────────────────────────────────────────
 const WEB_BASE_URL = 'https://bill-generator-aroranikhil995-1008s-projects.vercel.app';
@@ -60,6 +60,30 @@ export default function BillDetailsScreen({ route }: Props) {
     const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // ─── Actions ─────────────────────────────────────────────────────────────
+
+    // Request Storage Permission for Android to write to public Download directory
+    const requestStoragePermission = async () => {
+        if (Platform.OS !== 'android') return true;
+
+        // Android 13+ handles saving downloaded files explicitly or automatically via the system
+        // We only explicitly need WRITE_EXTERNAL_STORAGE for API 32 and below usually, 
+        // but we'll try requesting it anyway.
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: 'Storage Permission',
+                    message: 'Barista Cafe needs access to save files to your downloads folder.',
+                    buttonPositive: 'OK',
+                    buttonNegative: 'Cancel',
+                },
+            );
+            return granted === PermissionsAndroid.RESULTS.GRANTED;
+        } catch (err) {
+            console.warn(err);
+            return false;
+        }
+    };
 
     // Platform-specific download directory
     const getDownloadPath = (filename: string) => {
@@ -115,6 +139,16 @@ export default function BillDetailsScreen({ route }: Props) {
 
                 const file = await RNHTMLtoPDF.convert(options);
 
+                // Ensure permissions before writing
+                if (Platform.OS === 'android') {
+                    const hasPermission = await requestStoragePermission();
+                    if (!hasPermission) {
+                        // Fallback to internal storage or just share
+                        Alert.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
+                        return;
+                    }
+                }
+
                 // Copy to public downloads folder
                 const destPath = getDownloadPath(`bill-${bill.id}.pdf`);
 
@@ -123,7 +157,7 @@ export default function BillDetailsScreen({ route }: Props) {
                 }
                 await RNFS.copyFile(file.filePath, destPath);
 
-                Alert.alert("Success", `PDF downloaded to: ${destPath}`);
+                Alert.alert("Success", `PDF downloaded to:\n${destPath}`);
             } else {
                 Alert.alert("Error", "PDF generator module not available.");
             }
@@ -196,10 +230,19 @@ export default function BillDetailsScreen({ route }: Props) {
         </BODY>
     </ENVELOPE>`;
 
+            // Ensure permissions before writing
+            if (Platform.OS === 'android') {
+                const hasPermission = await requestStoragePermission();
+                if (!hasPermission) {
+                    Alert.alert("Permission denied", "Cannot save directly to Downloads. Please share the file instead.");
+                    return;
+                }
+            }
+
             const path = getDownloadPath(`tally-${bill.id}.xml`);
             await RNFS.writeFile(path, xml.trim(), 'utf8');
 
-            Alert.alert("Success", `Tally XML downloaded to: ${path}`);
+            Alert.alert("Success", `Tally XML downloaded to:\n${path}`);
 
         } catch (error) {
             console.error('Error exporting Tally XML: ', error);
@@ -562,6 +605,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginTop: 20,
+        marginHorizontal: 16,
         gap: 12,
     },
     actionBtn: {
