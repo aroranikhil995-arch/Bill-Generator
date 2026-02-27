@@ -97,33 +97,168 @@ export default function BillDetailsScreen({ route }: Props) {
             // A simple implementation using react-native-html-to-pdf
             // We generate a basic HTML string representation of the bill
             const html = `
+                <!DOCTYPE html>
                 <html>
-                <body style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h1>Barista Cafe</h1>
-                    <p><strong>Order ID:</strong> ${bill.id}</p>
-                    <p><strong>Date:</strong> ${dateString}</p>
-                    <p><strong>Payment Status:</strong> ${bill.payment_status.toUpperCase()}</p>
-                    <hr/>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="text-align: left; border-bottom: 1px solid #ccc;">
-                            <th>Item</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                        ${items.map(item => `
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body {
+                            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                            padding: 40px;
+                            color: #1A0A00;
+                            background-color: #FDF6EE;
+                        }
+                        .container {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            background: white;
+                            padding: 40px;
+                            border-radius: 12px;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 40px;
+                        }
+                        .logo {
+                            font-size: 32px;
+                            font-weight: 800;
+                            color: #3B1F0E;
+                            margin: 0;
+                            letter-spacing: 1px;
+                        }
+                        .gstin {
+                            font-size: 12px;
+                            color: #7A5C42;
+                            margin-top: 4px;
+                            letter-spacing: 2px;
+                        }
+                        .bill-info {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 30px;
+                            border-bottom: 2px dashed #eee;
+                            padding-bottom: 20px;
+                        }
+                        .info-col p {
+                            margin: 5px 0;
+                            font-size: 14px;
+                        }
+                        .status {
+                            display: inline-block;
+                            padding: 6px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: 700;
+                            letter-spacing: 1px;
+                        }
+                        .status.unpaid { background-color: #FFF0F0; color: #D32F2F; }
+                        .status.paid { background-color: #E8F5E9; color: #2E7D32; }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 30px;
+                        }
+                        th {
+                            text-align: left;
+                            padding: 12px 8px;
+                            border-bottom: 2px solid #3B1F0E;
+                            color: #7A5C42;
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                        }
+                        td {
+                            padding: 16px 8px;
+                            border-bottom: 1px solid #eee;
+                            font-size: 15px;
+                        }
+                        .totals-container {
+                            width: 300px;
+                            float: right;
+                        }
+                        .total-row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 8px 0;
+                            color: #7A5C42;
+                            font-size: 14px;
+                        }
+                        .grand-total {
+                            font-size: 20px;
+                            font-weight: 700;
+                            color: #3B1F0E;
+                            border-top: 2px solid #3B1F0E;
+                            padding-top: 12px;
+                            margin-top: 4px;
+                        }
+                        .footer {
+                            clear: both;
+                            padding-top: 60px;
+                            text-align: center;
+                            color: #7A5C42;
+                            font-size: 14px;
+                            border-top: 1px solid #eee;
+                            margin-top: 40px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 class="logo">Barista Cafe</h1>
+                            <div class="gstin">GSTIN: 07AAAAA0000A1Z5</div>
+                        </div>
+
+                        <div class="bill-info">
+                            <div class="info-col">
+                                <p><strong>Order ID:</strong> ${bill.id}</p>
+                                <p><strong>Date:</strong> ${dateString}</p>
+                            </div>
+                            <div class="info-col" style="text-align: right;">
+                                <div class="status ${bill.payment_status}">
+                                    ${bill.payment_status === 'paid' ? '● PAID' : '○ UNPAID'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <table>
                             <tr>
-                                <td>${item.item_name}</td>
-                                <td>${item.quantity}</td>
-                                <td>Rs.${(item.price || 0).toFixed(2)}</td>
-                                <td>Rs.${(item.item_total || 0).toFixed(2)}</td>
+                                <th>Item</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Price</th>
+                                <th style="text-align: right;">Total</th>
                             </tr>
-                        `).join('')}
-                    </table>
-                    <hr/>
-                    <p style="text-align: right;"><strong>Subtotal:</strong> Rs.${(bill.subtotal || 0).toFixed(2)}</p>
-                    <p style="text-align: right;"><strong>GST:</strong> Rs.${(bill.tax_amount || 0).toFixed(2)}</p>
-                    <h2 style="text-align: right;"><strong>Total:</strong> Rs.${(bill.total_amount || 0).toFixed(2)}</h2>
+                            ${items.map(item => `
+                                <tr>
+                                    <td style="font-weight: 500;">${item.item_name}</td>
+                                    <td style="text-align: center;">${item.quantity}</td>
+                                    <td style="text-align: right;">Rs.${(item.price || 0).toFixed(2)}</td>
+                                    <td style="text-align: right; font-weight: 600;">Rs.${(item.item_total || 0).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+
+                        <div class="totals-container">
+                            <div class="total-row">
+                                <span>Subtotal</span>
+                                <span>Rs.${(bill.subtotal || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="total-row">
+                                <span>GST (5%)</span>
+                                <span>Rs.${(bill.tax_amount || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="total-row grand-total">
+                                <span>Total</span>
+                                <span>Rs.${(bill.total_amount || 0).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div class="footer">
+                            <p>Thank you for choosing Barista Cafe!</p>
+                            <p style="font-size: 12px; color: #999;">This is a computer generated receipt.</p>
+                        </div>
+                    </div>
                 </body>
                 </html>
             `;
