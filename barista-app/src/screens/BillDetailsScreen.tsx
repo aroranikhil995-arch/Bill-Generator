@@ -540,7 +540,7 @@ export default function BillDetailsScreen({ route }: Props) {
                                 {selectedPayMethod === 'QR Code' && (
                                     <View style={styles.methodPreview}>
                                         <QRCode value="upi://pay?pa=merchant@upi&pn=Barista" size={120} />
-                                        <Text style={styles.previewText}>Ask customer to scan</Text>
+                                        <Text style={styles.previewText}>Please scan here to pay via UPI</Text>
                                     </View>
                                 )}
                                 {selectedPayMethod === 'Card' && (
